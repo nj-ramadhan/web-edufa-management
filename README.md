@@ -1,9 +1,15 @@
-# Super App for Barakah Economy Society
-A step-by-step guide to build a crowdfunding website using Django and React, based on the layout shown in the reference images.
-Building a Crowdfunding Platform with Django and React
+Edufa Centralized Finance Management System
+Sistem Informasi Manajemen Keuangan terpusat untuk Edufa (Lembaga Pendidikan & Terapi ABK) yang mengelola transaksi dari 1 kantor pusat dan 33 cabang.
+# Fitur Utama
+• Keuangan Terpusat: Semua transaksi divalidasi melalui 1 rekening bank utama.
+• Manajemen Tagihan Otomatis: Pembuatan invoice (DP, Terapi, PAS) setiap tanggal 29 atau 30 akhir bulan.
+• Sistem Payroll Terapis: Input data gaji dari admin cabang dengan notifikasi email otomatis ke terapis maksimal tanggal 4.
+• Logika Pembagian Hasil (Profit Sharing):
+    ◦ DP & Terapi: Pembagian 80% Cabang / 20% Pusat dari sisa tagihan setelah dikurangi biaya operasional.
+    ◦ PAS: Pembagian 20% Pusat / 20% Cabang / 60% Manual.
 
-
-# Step 1: Project Setup 
+--------------------------------------------------------------------------------
+# Step 1: Project Setup
 ## Backend (Django)
 ### Create virtual environment
     python -m venv env
@@ -17,14 +23,15 @@ Building a Crowdfunding Platform with Django and React
     pip install django djangorestframework django-cors-headers Pillow
 
 ### Start project
-    django-admin startproject barakah_app
-    cd barakah_app
+    django-admin startproject edufa_app
+    cd edufa_app
 
 ### Create apps
     python manage.py startapp accounts
-    python manage.py startapp campaigns
-    python manage.py startapp donations
-    python manage.py startapp payments
+    python manage.py startapp branches
+    python manage.py startapp billings
+    python manage.py startapp payroll
+    python manage.py startapp transactions
 
 
 ## Frontend (React)
@@ -47,53 +54,32 @@ Building a Crowdfunding Platform with Django and React
         is_anonymous_donor = models.BooleanField(default=False)
 
 
-    # campaigns/models.py
-    from django.db import models
+    # billings/models.py
+    Mengelola tipe layanan dan siklus tagihan akhir bulan.
     
-    class Campaign(models.Model):
-        CATEGORY_CHOICES = [
-            ('dhuafa', 'Peduli Dhuafa'),
-            ('yatim', 'Peduli Anak Yatim'),
-            ('quran', 'Wakaf Mushaf Al Quran'),
-            ('qurban', 'Qurban Peduli'),
-            ('palestine', 'Bantuan Palestina'),
-            ('education', 'Bantuan Pendidikan'),
-            ('iftar', 'Berbagi Iftar'),
-            ('jumat', 'Jumat Berkah'),
+    class Billing(models.Model):
+        SERVICE_CHOICES = [
+            ('dp', 'DP'),
+            ('terapi', 'Terapi'),
+            ('pas', 'PAS'),
         ]
-    
-        title = models.CharField(max_length=100)
-        description = models.TextField()
-        category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
-        thumbnail = models.ImageField(upload_to='campaign_images/')
-        target_amount = models.DecimalField(max_digits=12, decimal_places=2)
-        current_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
-        is_active = models.BooleanField(default=True)
-        created_at = models.DateTimeField(auto_now_add=True)
-
-    
-    # donations/models.py
-    from django.db import models
-    from accounts.models import User
-    from campaigns.models import Campaign
-    
-    class Donation(models.Model):
-        PAYMENT_METHOD_CHOICES = [
-            ('bsi', 'Bank Syariah Indonesia'),
-            ('bjb', 'Bank Jabar Banten Syariah'),
-        ]
-        
-        campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
-        donor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+        student_name = models.CharField(max_length=100)
+        branch = models.ForeignKey(Branch, on_delete=models.CASCADE)
+        service_type = models.CharField(choices=SERVICE_CHOICES, max_length=10)
         amount = models.DecimalField(max_digits=12, decimal_places=2)
-        donor_name = models.CharField(max_length=100)
-        donor_phone = models.CharField(max_length=15)
-        donor_email = models.EmailField(blank=True, null=True)
-        is_anonymous = models.BooleanField(default=False)
-        message = models.TextField(blank=True)
-        payment_method = models.CharField(max_length=10, choices=PAYMENT_METHOD_CHOICES)
-        payment_status = models.CharField(max_length=20, default='pending')
-        created_at = models.DateTimeField(auto_now_add=True)
+        billing_date = models.DateField() # Dibuat otomatis tgl 29/30
+        status = models.BooleanField(default=False) # Paid/Unpaid
+    
+    # payroll/models.py
+    Komponen gaji tetap yang diinput admin cabang.
+    
+    class Payroll(models.Model):
+        therapist_name = models.CharField(max_length=100)
+        basic_salary = models.DecimalField(max_digits=10, decimal_places=2)
+        meal_allowance = models.DecimalField(max_digits=10, decimal_places=2)
+        bpjs = models.DecimalField(max_digits=10, decimal_places=2)
+        is_sent = models.BooleanField(default=False) # Status notifikasi email
+
         
 # Step 3: Django REST API Setup
 ## Configure settings
@@ -138,6 +124,13 @@ Building a Crowdfunding Platform with Django and React
     
     MEDIA_URL = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
+
+# Step 3: Business Logic (Backend)
+    Sesuai persyaratan sumber, sistem harus mengimplementasikan logika berikut di views.py atau services.py:
+    1. Profit Sharing Logic:
+        ◦ DP/Terapi: (Total Tagihan - Pengeluaran) * 0.20 untuk setoran ke Pusat.
+        ◦ PAS: Dialokasikan 20% Pusat, 20% Cabang, dan 60% Manual.
+    2. Automation Task: Menggunakan cron job atau celery untuk generate invoice setiap tanggal 29/30
     
 # Step 4: Create API Serializers and Views Serializers
     # campaigns/serializers.py
@@ -220,33 +213,19 @@ Building a Crowdfunding Platform with Django and React
 # Step 6: React Component Structure
 Create the following component structure:
 
-    frontend/
-    └── src/
+        frontend/src/
         ├── components/
-        │   ├── layout/
-        │   │   ├── Header.js
-        │   │   ├── Footer.js
-        │   │   └── Navigation.js
-        │   ├── campaigns/
-        │   │   ├── CampaignCard.js
-        │   │   ├── CampaignGrid.js
-        │   │   ├── CampaignDetails.js
-        │   │   └── CampaignSlider.js
-        │   └── donations/
-        │       ├── DonationForm.js
-        │       ├── PaymentMethod.js
-        │       └── DonationPresets.js
-        ├── pages/
-        │   ├── Home.js
-        │   ├── CampaignPage.js
-        │   ├── DonationPage.js
-        │   ├── PaymentPage.js
-        │   └── AboutUs.js
+        │   ├── layout/ (Header, Sidebar Edufa)
+        │   ├── finance/
+        │   │   ├── BillingTable.js  (List Invoice Murid)
+        │   │   └── ProfitSharing.js (Perhitungan 80/20)
+        │   └── payroll/
+        │       ├── PayrollInput.js  (Input Admin Cabang)
+        │       └── PayrollReport.js (View Admin Pusat)
         ├── services/
-        │   ├── api.js
-        │   ├── auth.js
-        │   └── campaigns.js
-        ├── App.js
+        │   ├── api.js (Axios Config) [6]
+        │   └── finance.js (Fetch billing/payroll data)
+        └── App.js (Routing)
         └── index.js
         
 # Step 7: Implement Key React Components
@@ -848,10 +827,10 @@ Configure HTTPS with Let's Encrypt
 # Step 15: Production
 ## Clone your repository in the VPS:
     cd /var/www
-    git clone https://github.com/yourusername/youproject.git
+    git clone https://github.com/nj-ramadhan/web-edufa-management.git
 
 ## Set up Backend (Django):
-    cd /var/www/sdi-web-django-react-cf-ypmnpeduli/crowdfunding_platform/backend
+    cd /var/www/web-edufa-management/edufa_app/backend
 
 ## Create virtual environment
     python3 -m venv env
@@ -865,7 +844,7 @@ Configure HTTPS with Let's Encrypt
     python manage.py collectstatic
 
 ## Set up Frontend (React):
-    cd /var/www/sdi-web-django-react-cf-ypmnpeduli/crowdfunding_platform/frontend
+    cd /var/www/web-edufa-management/edufa_app/frontend
 
 ## Install dependencies and build
     npm install
@@ -883,8 +862,8 @@ Configure HTTPS with Let's Encrypt
     [Service]
     User=www-data
     Group=www-data
-    WorkingDirectory=/var/www/sdi-web-django-react-cf-ypmnpeduli/crowdfunding_platform/backend
-    ExecStart=/var/www/sdi-web-django-react-cf-ypmnpeduli/crowdfunding_platform/backend/env/bin/gunicorn \
+    WorkingDirectory=/var/www/web-edufa-management/edufa_app/backend
+    ExecStart=/var/www/web-edufa-management/edufa_app/backend/env/bin/gunicorn \
               --access-logfile - \
               --workers 3 \
               --bind unix:/run/gunicorn.sock \
@@ -921,16 +900,16 @@ Configure HTTPS with Let's Encrypt
         
         # Serve static files
         location /static/ {
-            root /var/www/sdi-web-django-react-cf-ypmnpeduli/crowdfunding_platform/backend;
+            root /var/www/web-edufa-management/edufa_app/backend;
         }
     
         location /media/ {
-            root /var/www/sdi-web-django-react-cf-ypmnpeduli/crowdfunding_platform/backend;
+            root /var/www/web-edufa-management/edufa_app/backend;
         }
     
         # Serve React frontend
         location / {
-            root /var/www/sdi-web-django-react-cf-ypmnpeduli/crowdfunding_platform/frontend/build;
+            root /var/www/web-edufa-management/edufa_app/frontend/build;
             try_files $uri $uri/ /index.html;
         }
     
@@ -962,10 +941,10 @@ Configure HTTPS with Let's Encrypt
     ALLOWED_HOSTS = ['ypmn-peduli.org', 'www.ypmn-peduli.org']
     
     STATIC_URL = '/static/'
-    STATIC_ROOT = '/var/www/sdi-web-django-react-cf-ypmnpeduli/crowdfunding_platform/backend/static/'
+    STATIC_ROOT = '/var/www/web-edufa-management/edufa_app/backend/static/'
     
     MEDIA_URL = '/media/'
-    MEDIA_ROOT = '/var/www/sdi-web-django-react-cf-ypmnpeduli/crowdfunding_platform/backend/media/'
+    MEDIA_ROOT = '/var/www/web-edufa-management/edufa_app/backend/media/'
     
     CORS_ALLOWED_ORIGINS = [
         "https://ypmn-peduli.org",
@@ -1037,7 +1016,7 @@ For each website, set up the Django backend.
     python manage.py runserver
 
 ### For barakah-economy.com:
-    cd /var/www/barakah-economy/barakah_app/backend
+    cd /var/www/barakah-economy/edufa_app/backend
 
 #### Create a virtual environment
     python3 -m venv venv
@@ -1069,7 +1048,7 @@ For each website, build the React frontend.
     npm run build
 
 ### For barakah-economy.com:
-    cd /var/www/barakah-economy/barakah_app/frontend
+    cd /var/www/barakah-economy/edufa_app/frontend
 
 #### Install dependencies
     npm install
@@ -1112,7 +1091,7 @@ Install Gunicorn:
 
 bash
 Copy
-cd /var/www/barakah-economy/barakah_app/backend
+cd /var/www/barakah-economy/edufa_app/backend
 pip install gunicorn
 Create a systemd service file (/etc/systemd/system/barakah-economy.service):
 
@@ -1125,8 +1104,8 @@ After=network.target
 [Service]
 User=your_user
 Group=www-data
-WorkingDirectory=/var/www/barakah-economy/barakah_app/backend
-ExecStart=/var/www/barakah-economy/barakah_app/backend/venv/bin/gunicorn --workers 3 --bind unix:/tmp/barakah-economy.sock barakah_app.wsgi:application
+WorkingDirectory=/var/www/barakah-economy/edufa_app/backend
+ExecStart=/var/www/barakah-economy/edufa_app/backend/venv/bin/gunicorn --workers 3 --bind unix:/tmp/barakah-economy.sock edufa_app.wsgi:application
 
 [Install]
 WantedBy=multi-user.target
@@ -1187,11 +1166,11 @@ server {
     }
 
     location /static/ {
-        alias /var/www/barakah-economy/barakah_app/backend/static/;
+        alias /var/www/barakah-economy/edufa_app/backend/static/;
     }
 
     location /media/ {
-        alias /var/www/barakah-economy/barakah_app/backend/media/;
+        alias /var/www/barakah-economy/edufa_app/backend/media/;
     }
 }
 Enable the site:
@@ -1223,7 +1202,7 @@ http://barakah-economy.com
 Ensure both websites are working correctly.
 ```
 sdi-web-django-react-sa-bae
-├─ barakah_app
+├─ edufa_app
 │  ├─ backend
 │  │  ├─ accounts
 │  │  │  ├─ admin.py
@@ -1235,7 +1214,7 @@ sdi-web-django-react-sa-bae
 │  │  │  ├─ tests.py
 │  │  │  ├─ views.py
 │  │  │  └─ __init__.py
-│  │  ├─ barakah_app
+│  │  ├─ edufa_app
 │  │  │  ├─ asgi.py
 │  │  │  ├─ settings.py
 │  │  │  ├─ urls.py
