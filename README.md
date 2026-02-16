@@ -1,10 +1,11 @@
-Edufa Centralized Finance Management System
+# Edufa Centralized Finance Management System
 Sistem Informasi Manajemen Keuangan terpusat untuk Edufa (Lembaga Pendidikan & Terapi ABK) yang mengelola transaksi dari 1 kantor pusat dan 33 cabang.
+
 # Fitur Utama
-• Keuangan Terpusat: Semua transaksi divalidasi melalui 1 rekening bank utama.
-• Manajemen Tagihan Otomatis: Pembuatan invoice (DP, Terapi, PAS) setiap tanggal 29 atau 30 akhir bulan.
-• Sistem Payroll Terapis: Input data gaji dari admin cabang dengan notifikasi email otomatis ke terapis maksimal tanggal 4.
-• Logika Pembagian Hasil (Profit Sharing):
+## Keuangan Terpusat: Semua transaksi divalidasi melalui 1 rekening bank utama.
+## Manajemen Tagihan Otomatis: Pembuatan invoice (DP, Terapi, PAS) setiap tanggal 29 atau 30 akhir bulan.
+## Sistem Payroll Terapis: Input data gaji dari admin cabang dengan notifikasi email otomatis ke terapis maksimal tanggal 4
+## Logika Pembagian Hasil (Profit Sharing):
     ◦ DP & Terapi: Pembagian 80% Cabang / 20% Pusat dari sisa tagihan setelah dikurangi biaya operasional.
     ◦ PAS: Pembagian 20% Pusat / 20% Cabang / 60% Manual.
 
@@ -16,11 +17,23 @@ Sistem Informasi Manajemen Keuangan terpusat untuk Edufa (Lembaga Pendidikan & T
     
 #### On Linux: 
     source env/bin/activate  
-#### On Windows: 
+#### On Windows:
+  Set windows powershell to enable activate venv
+    Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
     env\Scripts\activate
 
 ### Install dependencies
-    pip install django djangorestframework django-cors-headers Pillow
+    pip install django djangorestframework django-cors-headers Pillow djangorestframework-simplejwt
+    pip install django-environ
+    pip install google-api-python-client 
+    google-auth-httplib2 google-auth-oauthlib
+    pip install django-admin-interface
+    pip install django-extensions
+    pip install django-ckeditor
+    pip install django-notifications-hq
+    pip install psycopg2-binary
+    pip install -r requirements.txt
 
 ### Start project
     django-admin startproject edufa_app
@@ -770,6 +783,38 @@ Create the following component structure:
             
             self.stdout.write(self.style.SUCCESS('Successfully seeded campaigns'))
             
+## Instalasi PostgreSQL (Linux/Ubuntu)
+  Berdasarkan referensi deployment pada VPS, Anda perlu menginstal PostgreSQL dan kontribusinya. Jalankan perintah berikut di terminal:
+  sudo apt update
+  sudo apt install postgresql postgresql-contrib
+  2. Membuat Database dan User
+  Setelah terinstal, Anda harus membuat database khusus untuk project Edufa dan pengguna yang memiliki akses ke database tersebut.
+  1. Masuk ke prompt PostgreSQL: 
+    sudo -u postgres psql.
+  2. Buat database: 
+    CREATE DATABASE edufa_db;.
+  3. Buat user: 
+    CREATE USER edufa_user WITH PASSWORD 'password_anda';.
+  4. Berikan hak akses: 
+    GRANT ALL PRIVILEGES ON DATABASE edufa_db TO edufa_user;
+
+## Instalasi PostgreSQL di Windows
+  Karena Windows tidak menggunakan sudo apt, Anda perlu mengunduh installer resmi:
+  1. Unduh Installer: Buka situs resmi PostgreSQL dan pilih Interactive Installer by EDB.
+  2. Instalasi: Jalankan file .exe. Selama proses:
+      ◦ Tentukan password untuk superuser postgres.
+      ◦ Biarkan port default pada 5432.
+  3. Buka SQL Shell (psql): Cari "SQL Shell" di menu Start untuk mulai membuat database.
+  3. Membuat Database dan User (via SQL Shell)
+  Setelah masuk ke psql (masukkan password yang Anda buat saat instalasi), jalankan perintah SQL berikut:
+  CREATE DATABASE edufa_db;
+  CREATE USER edufa_user WITH PASSWORD 'password_anda';
+  GRANT ALL PRIVILEGES ON DATABASE edufa_db TO edufa_user;
+  4. Menghubungkan Django ke PostgreSQL
+  Instal driver database agar Django bisa berkomunikasi dengan PostgreSQL di Windows:
+  pip install psycopg2-binary
+  Kemudian, perbarui file settings.py pada bagian DATABASES dengan informasi yang telah Anda buat di atas. Pastikan HOST diatur ke 'localhost' dan PORT ke '5432'.
+
 # Step 12: Running the Development Servers
 ## Run Django server
     python manage.py runserver
