@@ -1,27 +1,20 @@
+// App.js
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
-// Layout Components
-import Header from './components/layout/Header';
-import Footer from './components/layout/Footer';
+import PrivateRoute from './utils/PrivateRoute';
+import LoginPage from './pages/LoginPage';
 
 // Edufa Finance Pages
 import FinanceDashboard from './pages/FinanceDashboard';
 import BillingPage from './pages/BillingPage';
 import PayrollPage from './pages/PayrollPage';
 import BranchListPage from './pages/BranchListPage';
-import LoginPage from './pages/LoginPage';
 
-import './App.css';
-
-function App() {
+const App = () => {
   return (
     <Router>
-      <div className="app">
-        {/* Header tetap muncul di setiap halaman sesuai struktur proyek sebelumnya */}
-        <Header /> 
-        
-        <main className="main-content">
+      <div className="min-h-screen bg-gray-200 flex justify-center">
+        <div className="w-full max-w-md bg-white min-h-screen relative">
           <Routes>
             {/* Dashboard Utama: Ringkasan Profit Sharing 80/20 & Total Pemasukan */}
             <Route path="/" element={<FinanceDashboard />} />
@@ -38,10 +31,11 @@ function App() {
             {/* Autentikasi: Login untuk Admin Pusat & Admin Cabang */}
             <Route path="/login" element={<LoginPage />} />
           </Routes>
-        </main>
-
-        <Footer />
+        </div>
       </div>
     </Router>
   );
-}
+};
+
+
+export default App;

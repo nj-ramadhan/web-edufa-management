@@ -5,6 +5,10 @@
 		}
 	],
 	"settings": {
-		"postman.settings.dotenv-detection-notification-visibility": false
+		"postman.settings.dotenv-detection-notification-visibility": false,
+		"ROS2.distro": "jazzy",
+		"python.autoComplete.extraPaths": [
+			"/opt/ros/jazzy/lib/python3.12/site-packages"
+		]
 	}
 }

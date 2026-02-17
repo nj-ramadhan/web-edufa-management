@@ -785,18 +785,31 @@ Create the following component structure:
             
 ## Instalasi PostgreSQL (Linux/Ubuntu)
   Berdasarkan referensi deployment pada VPS, Anda perlu menginstal PostgreSQL dan kontribusinya. Jalankan perintah berikut di terminal:
-  sudo apt update
-  sudo apt install postgresql postgresql-contrib
+
+    sudo apt update
+    sudo apt install postgresql postgresql-contrib
+
   2. Membuat Database dan User
   Setelah terinstal, Anda harus membuat database khusus untuk project Edufa dan pengguna yang memiliki akses ke database tersebut.
   1. Masuk ke prompt PostgreSQL: 
-    sudo -u postgres psql.
+
+    sudo -u postgres psql
+
   2. Buat database: 
-    CREATE DATABASE edufa_db;.
+
+    CREATE DATABASE edufa_db;
+
   3. Buat user: 
-    CREATE USER edufa_user WITH PASSWORD 'password_anda';.
+
+    CREATE USER edufa_user WITH PASSWORD 'password_anda';
+    GRANT ALL ON SCHEMA public TO edufa_user;
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO edufa_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO edufa_user;
+
   4. Berikan hak akses: 
+
     GRANT ALL PRIVILEGES ON DATABASE edufa_db TO edufa_user;
+    ALTER DATABASE edufa_db OWNER TO edufa_user;
 
 ## Instalasi PostgreSQL di Windows
   Karena Windows tidak menggunakan sudo apt, Anda perlu mengunduh installer resmi:
@@ -817,7 +830,10 @@ Create the following component structure:
 
 # Step 12: Running the Development Servers
 ## Run Django server
+    python manage.py makemigrations
+    python manage.py migrate
     python manage.py runserver
+    
 ## or Run Django server with https    
     python manage.py runserver_plus --cert-file localhost.pem --key-file localhost-key.pem
 
