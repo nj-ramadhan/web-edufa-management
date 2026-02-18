@@ -832,6 +832,9 @@ Create the following component structure:
 ## Run Django server
     python manage.py makemigrations
     python manage.py migrate
+    python manage.py createsuperuser
+    
+    python manage.py collectstatic
     python manage.py runserver
     
 ## or Run Django server with https    

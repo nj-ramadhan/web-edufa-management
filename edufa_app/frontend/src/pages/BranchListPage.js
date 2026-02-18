@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import Header from '../components/layout/Header';
+import NavigationButton from '../components/layout/Navigation';
 import { getBranches } from '../services/branches';
 
 // Styled Components mengikuti tema Barakah Economy & Edufa
@@ -72,6 +74,7 @@ const BranchListPage = () => {
 
   return (
     <PageContainer>
+      <NavigationButton />
       <Title>Monitoring Keuangan 33 Cabang Edufa</Title>
       
       <div style={{ overflowX: 'auto' }}>

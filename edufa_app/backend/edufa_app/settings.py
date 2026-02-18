@@ -139,8 +139,8 @@ WSGI_APPLICATION = 'edufa_app.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DEBUG = False
-if DEBUG:
+DEBUG_DB = False
+if DEBUG_DB:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -255,7 +255,8 @@ MEDIA_URL = '/media/'
 
 
 if DEBUG:
-    STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] 
+    STATIC_ROOT = BASE_DIR / 'static' 
+    # STATICFILES_DIRS = [BASE_DIR / "static", ] 
     # STATIC_ROOT = BASE_DIR / 'static'
     MEDIA_ROOT = BASE_DIR / 'media'
 else:
